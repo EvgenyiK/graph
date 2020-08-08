@@ -234,7 +234,7 @@ func getAllGraph()([]models.GraphNode, error) {
 func updateGraph(id int64, graph models.GraphNode) int64 {
 	db:= createConnection()
 	defer db.Close()
-	sqlStatement:= `udate graphs set neighbors=$2,roots=$3 where id=$1`
+	sqlStatement:= `update graphs set neighbors=$2,roots=$3 where id=$1`
 	res,err:= db.Exec(sqlStatement, id, graph.Neighbors, graph.Roots)
 	if err != nil {
         log.Fatalf("Unable to execute the query. %v", err)
