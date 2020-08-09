@@ -2,7 +2,6 @@ package midleware
 
 import (
 	"log"
-    //"testing"
 )
 
 
@@ -58,6 +57,7 @@ func fillGraph() {
     g.AddEdge(&nD, &nA)
 }
 
+//TestAdd ...
 func TestAdd() {
     fillGraph()
     g.String()
