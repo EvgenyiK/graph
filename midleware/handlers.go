@@ -169,13 +169,13 @@ func DeleteGraph(w http.ResponseWriter, r *http.Request) {
 func insertGraph(graph models.GraphNode)int64{
 	db:= createConnection()
 	defer db.Close()
-	sqlStatement:= `insert into graphs(neighbors,roots)values($1,$2)returning id`
+	sqlStatement:= `insert into graphs(node)values($1)returning id`
 
 	//сохраняем id
 	var id int64
 
 	//выполняем наш запрос
-	err:= db.QueryRow(sqlStatement, graph.Neighbors, graph.Roots).Scan(&id)
+	err:= db.QueryRow(sqlStatement, graph.Node).Scan(&id)
 	if err != nil {
         log.Fatalf("Unable to execute the query. %v", err)
 	}
@@ -190,7 +190,7 @@ func getGraph(id int64) (models.GraphNode, error) {
 	var graph models.GraphNode
 	sqlStatement:= `select * from graphs where id=$1`
 	row:= db.QueryRow(sqlStatement, id)
-	err:= row.Scan(&graph.ID,&graph.Neighbors,&graph.Roots)
+	err:= row.Scan(&graph.ID,&graph.Node)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -220,7 +220,7 @@ func getAllGraph()([]models.GraphNode, error) {
 	//перебираем результаты
 	for rows.Next(){
 		var graph models.GraphNode
-		err:= rows.Scan(&graph.ID,&graph.Neighbors,&graph.Roots)
+		err:= rows.Scan(&graph.ID,&graph.Node)
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
@@ -234,8 +234,8 @@ func getAllGraph()([]models.GraphNode, error) {
 func updateGraph(id int64, graph models.GraphNode) int64 {
 	db:= createConnection()
 	defer db.Close()
-	sqlStatement:= `update graphs set neighbors=$2,roots=$3 where id=$1`
-	res,err:= db.Exec(sqlStatement, id, graph.Neighbors, graph.Roots)
+	sqlStatement:= `update graphs set node=$2 where id=$1`
+	res,err:= db.Exec(sqlStatement, id, graph.Node)
 	if err != nil {
         log.Fatalf("Unable to execute the query. %v", err)
 	}
