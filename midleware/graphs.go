@@ -7,10 +7,10 @@ import (
     "github.com/cheekybits/genny/generic"
 )
 
-// Item the type of the binary search tree
+// Item Тип двоичного дерева
 type Item generic.Type
 
-// Node a single node that composes the tree
+// Node единственный узел состовляющий дерево
 type Node struct {
     value Item
 }
@@ -19,7 +19,7 @@ func (n *Node) String() string {
     return fmt.Sprintf("%v", n.value)
 }
 
-// ItemGraph the Items graph
+// ItemGraph граф
 type ItemGraph struct {
     nodes []*Node
     edges map[Node][]*Node
@@ -33,7 +33,7 @@ func (g *ItemGraph) AddNode(n *Node) {
     g.lock.Unlock()
 }
 
-// AddEdge adds an edge to the graph
+// AddEdge добавляет узел к графу
 func (g *ItemGraph) AddEdge(n1, n2 *Node) {
     g.lock.Lock()
     if g.edges == nil {
@@ -44,7 +44,7 @@ func (g *ItemGraph) AddEdge(n1, n2 *Node) {
     g.lock.Unlock()
 }
 
-// AddEdge adds an edge to the graph
+// Выводит сам обход
 func (g *ItemGraph) String() {
     g.lock.RLock()
     s := ""

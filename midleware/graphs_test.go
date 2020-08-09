@@ -1,19 +1,31 @@
 package midleware
 
 import (
+	"log"
     "testing"
 )
 
+
 var g ItemGraph
 
-var graph1,_ = getGraph(6)
-var graph2,_ = getGraph(8)
-var graph3,_ = getGraph(9)
-
 func fillGraph() {
-    nA := Node{graph1.ID}
-    nB := Node{graph2.ID}
-    nC := Node{graph3.ID}
+    
+    graph1,err:=getGraph(1)
+    if err != nil {
+		log.Fatalf("Error sqltatement")
+	}
+    graph2,err:=getGraph(2)
+    if err != nil {
+		log.Fatalf("Error sqltatement")
+	}
+    graph3,err:=getGraph(3)
+    if err != nil {
+		log.Fatalf("Error sqltatement")
+	}
+
+    nA := Node{graph1.Node}
+    nB := Node{graph2.Node}
+    nC := Node{graph3.Node}
     
     g.AddNode(&nA)
     g.AddNode(&nB)
