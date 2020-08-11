@@ -1,7 +1,7 @@
 package router
 
 import(
-	"github.com/EvgenyiK/graph/midleware"
+	"github.com/EvgenyiK/graph/server/midleware"
 	"github.com/gorilla/mux"
 )
 

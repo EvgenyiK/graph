@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/EvgenyiK/graph/models"
+	"github.com/EvgenyiK/graph/server/models"
 
 	"github.com/gorilla/mux"   //пакет для роутов
 	"github.com/joho/godotenv" //пакет для чтения конфига
