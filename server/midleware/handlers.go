@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	//"strings"
 
 	"github.com/EvgenyiK/graph/server/models"
 
@@ -126,15 +127,14 @@ func UpdateGraph(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Unable to decode the request body.  %v", err)
 	}
 
-
 	//функция обновления графов
 	updatedRows := updateGraph(int64(id), graph)
 	//вывод сообщения об обновлении графов
-	msg:= fmt.Sprintf("Graph updated successfully. Total rows/record affected %v", updatedRows)
+	msg := fmt.Sprintf("Graph updated successfully. Total rows/record affected %v", updatedRows)
 
 	res := response{
-        ID:      int64(id),
-        Message: msg,
+		ID:      int64(id),
+		Message: msg,
 	}
 	json.NewEncoder(w).Encode(res)
 }
@@ -142,42 +142,40 @@ func UpdateGraph(w http.ResponseWriter, r *http.Request) {
 //DeleteGraph удаление графа из таблицы
 func DeleteGraph(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Access-Control-Allow-Methods", "DELETE")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	
-	params:= mux.Vars(r)
+
+	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-        log.Fatalf("Unable to convert the string into int.  %v", err)
+		log.Fatalf("Unable to convert the string into int.  %v", err)
 	}
-	
+
 	//функция удаления графа
 	deletedRows := deleteGraph(int64(id))
 	msg := fmt.Sprintf("Graph deleted successfully. Total rows/record affected %v", deletedRows)
-	res:= response{
-		ID: int64(id),
+	res := response{
+		ID:      int64(id),
 		Message: msg,
 	}
 	json.NewEncoder(w).Encode(res)
 }
 
-
-
 //------------------реализация функций
 
-func insertGraph(graph models.GraphNode)int64{
-	db:= createConnection()
+func insertGraph(graph models.GraphNode) int64 {
+	db := createConnection()
 	defer db.Close()
-	sqlStatement:= `insert into graphs(node)values($1)returning id`
+	sqlStatement := `insert into graphs(node,weight)values($1,$2)returning id`
 
 	//сохраняем id
 	var id int64
 
 	//выполняем наш запрос
-	err:= db.QueryRow(sqlStatement, graph.Node).Scan(&id)
+	err := db.QueryRow(sqlStatement, graph.Node).Scan(&id)
 	if err != nil {
-        log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v", err)
 	}
 	fmt.Printf("Inserted a single record %v", id)
 
@@ -185,12 +183,12 @@ func insertGraph(graph models.GraphNode)int64{
 }
 
 func getGraph(id int64) (models.GraphNode, error) {
-	db:= createConnection()
+	db := createConnection()
 	defer db.Close()
 	var graph models.GraphNode
-	sqlStatement:= `select * from graphs where id=$1`
-	row:= db.QueryRow(sqlStatement, id)
-	err:= row.Scan(&graph.ID,&graph.Node)
+	sqlStatement := `select * from graphs where id=$1`
+	row := db.QueryRow(sqlStatement, id)
+	err := row.Scan(&graph.ID, &graph.Node, &graph.Weight)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -199,18 +197,18 @@ func getGraph(id int64) (models.GraphNode, error) {
 	case nil:
 		return graph, nil
 	default:
-		log.Fatalf("Unable to scan the row. %v", err)		
+		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
-	return graph,err
+	return graph, err
 }
 
-func getAllGraph()([]models.GraphNode, error) {
-	db:= createConnection()
+func getAllGraph() ([]models.GraphNode, error) {
+	db := createConnection()
 	defer db.Close()
 	var graphs []models.GraphNode
-	sqlStatement:= `select * from graphs`
-	rows,err:= db.Query(sqlStatement)
+	sqlStatement := `select * from graphs`
+	rows, err := db.Query(sqlStatement)
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
 	}
@@ -218,51 +216,200 @@ func getAllGraph()([]models.GraphNode, error) {
 	defer rows.Close()
 
 	//перебираем результаты
-	for rows.Next(){
+	for rows.Next() {
 		var graph models.GraphNode
-		err:= rows.Scan(&graph.ID,&graph.Node)
+		err := rows.Scan(&graph.ID, &graph.Node, &graph.Weight)
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 		}
 		//добавляем граф в срез
-		graphs = append(graphs,graph)
+		graphs = append(graphs, graph)
 	}
-	
-	return graphs,err
+
+	return graphs, err
 }
 
 func updateGraph(id int64, graph models.GraphNode) int64 {
-	db:= createConnection()
+	db := createConnection()
 	defer db.Close()
-	sqlStatement:= `update graphs set node=$2 where id=$1`
-	res,err:= db.Exec(sqlStatement, id, graph.Node)
+	sqlStatement := `update graphs set node=$2 weight=$3 where id=$1`
+	res, err := db.Exec(sqlStatement, id, graph.Node, graph.Weight)
 	if err != nil {
-        log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v", err)
 	}
 
 	//проверка сколько строк затронуто
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-        log.Fatalf("Error while checking the affected rows. %v", err)
+		log.Fatalf("Error while checking the affected rows. %v", err)
 	}
 
 	return rowsAffected
 }
 
 func deleteGraph(id int64) int64 {
-	db:= createConnection()
+	db := createConnection()
 	defer db.Close()
-	sqlStatement:= `delete from graphs where id=$1`
+	sqlStatement := `delete from graphs where id=$1`
 	res, err := db.Exec(sqlStatement, id)
 	if err != nil {
-        log.Fatalf("Unable to execute the query. %v", err)
+		log.Fatalf("Unable to execute the query. %v", err)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-        log.Fatalf("Error while checking the affected rows. %v", err)
+		log.Fatalf("Error while checking the affected rows. %v", err)
 	}
-	
+
 	fmt.Printf("Total rows/record affected %v", rowsAffected)
 
 	return rowsAffected
+}
+
+//-----------реализация графа----------------
+
+type Graph struct {
+	VertexArray []*Vertex
+}
+
+type Vertex struct {
+	Id      int64 `json:"id"`
+	Visited bool
+	AddEdge []*Edge
+	Prev    *Vertex
+}
+
+type Edge struct {
+	Source      *Vertex
+	Destination *Vertex
+	Weight      int64 `json:"weight"`
+}
+
+func NewGraph() *Graph {
+	return &Graph{
+		make([]*Vertex, 0),
+	}
+}
+
+func NewVertex(id int64) *Vertex {
+	return &Vertex{
+		Id:      id,
+		Visited: false,
+		AddEdge: make([]*Edge, 0),
+	}
+}
+
+func NewEdge(source, destination *Vertex, weight int64) *Edge {
+	return &Edge{
+		source,
+		destination,
+		weight,
+	}
+}
+
+func (G *Graph) AddVertexs(more ...*Vertex) {
+	for _, vertex := range more {
+		G.VertexArray = append(G.VertexArray, vertex)
+	}
+}
+
+func (G *Graph) GetVertexByID(id int64) *Vertex {
+	for _, vertex := range G.VertexArray {
+		if vertex.Id == id {
+			return vertex
+		}
+	}
+	return nil
+}
+
+//Find the node with the id, or create it.
+func (G *Graph) GetOrConst(id int64) *Vertex {
+	vertex := G.GetVertexByID(id)
+	if vertex == nil {
+		vertex = NewVertex(id)
+		G.AddVertexs(vertex)
+	}
+	return vertex
+}
+
+func (A *Vertex) AddEdges(more ...*Edge) {
+	for _, edge := range more {
+		A.AddEdge = append(A.AddEdge, edge)
+	}
+}
+
+/*func ImportData(data int) *Graph {
+	//	TODO
+}*/
+
+func (A *Vertex) GetAddEdg() chan *Edge {
+	edgechan := make(chan *Edge)
+	go func() {
+		defer close(edgechan)
+		for _, edge := range A.AddEdge {
+			edgechan <- edge
+		}
+	}()
+
+	return edgechan
+}
+
+func DFS(StartSource *Vertex) {
+	if StartSource.Visited {
+		return
+	}
+
+	StartSource.Visited = true
+	fmt.Printf("%v ", StartSource.Id)
+
+	for edge := range StartSource.GetAddEdg() {
+		DFS(edge.Destination)
+	}
+}
+
+const MAXWEIGHT = 1000000
+
+type MinDistanceFromSource map[*Vertex]int64
+
+func (G *Graph) Dijks(StartSource, TargetSource *Vertex) MinDistanceFromSource {
+	D := make(MinDistanceFromSource)
+	for _, vertex := range G.VertexArray {
+		D[vertex] = MAXWEIGHT
+	}
+	D[StartSource] = 0
+
+	for edge := range StartSource.GetAddEdg() {
+		D[edge.Destination] = edge.Weight
+	}
+	CalculateDistance(StartSource, TargetSource, D)
+	return D
+}
+
+func CalculateDistance(StartSource, TargetSource *Vertex, D MinDistanceFromSource) {
+	for edge := range StartSource.GetAddEdg() {
+		if D[edge.Destination] > D[edge.Source]+edge.Weight {
+			D[edge.Destination] = D[edge.Source] + edge.Weight
+			edge.Destination.Prev = edge.Source
+		} else if D[edge.Destination] < D[edge.Source]+edge.Weight {
+			continue
+		}
+		CalculateDistance(edge.Destination, TargetSource, D)
+	}
+}
+
+func GraphPrint() {
+	db := createConnection()
+	defer db.Close()
+	
+
+	/*DFS(G1.ID)
+		distmap:= G1.Dijks(G1,G2)
+
+		fmt.Println()
+	    for vertex,distance := range distmap {
+			fmt.Println(vertex.Id, "===", distance)
+			if vertex.Prev !=nil {
+				fmt.Println(vertex.Id, " -> ", vertex.Prev.Id)
+			}
+		}*/
+
 }
