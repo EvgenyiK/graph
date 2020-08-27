@@ -272,7 +272,7 @@ type Graph struct {
 }
 
 type Vertex struct {
-	Id      int64 `json:"id"`
+	Id      int64
 	Visited bool
 	AddEdge []*Edge
 	Prev    *Vertex
@@ -281,7 +281,7 @@ type Vertex struct {
 type Edge struct {
 	Source      *Vertex
 	Destination *Vertex
-	Weight      int64 `json:"weight"`
+	Weight      int64
 }
 
 func NewGraph() *Graph {
@@ -399,7 +399,6 @@ func CalculateDistance(StartSource, TargetSource *Vertex, D MinDistanceFromSourc
 func GraphPrint() {
 	db := createConnection()
 	defer db.Close()
-	
 
 	/*DFS(G1.ID)
 		distmap:= G1.Dijks(G1,G2)
